@@ -12,23 +12,23 @@
 		{{ctrl.alerte}}
 	</div>
 	<div ng-show="ctrl.reconnectUrl != null">
-		Vous devez vous reconnecter : 
-		<a ng-href="{{ctrl.reconnectUrl}}">Cliquez ici</a>
+		You have to re-log 
+		<a ng-href="{{ctrl.reconnectUrl}}">Click here</a>
 	</div>
 	
 	<hr/>
 	
 	<div>
-		URL de base pour les services rest : {{ctrl.param.restServer}}
+		OpenID userInfo endpoint : {{ctrl.param.userInfoEndPoint}}
 	</div>
 	<div>
-		AccessToken : {{ctrl.accessToken}}
+		Access Token : {{ctrl.accessToken}}
 	</div>
 	
 	<hr/>
 	
-	<span>Utilisateur courant :</span>
-	<span ng-show="ctrl.userInfo == null">Non récupéré</span>
+	<span>Current user :</span>
+	<span ng-show="ctrl.userInfo == null">Click the button to extract it from the userInfo endpoint</span>
 	<span ng-show="ctrl.userInfo != null">{{ctrl.userInfo.name}}</span>
 	<button ng-click="ctrl.loadUserInfo()">
 		Extract current user name from openid userInfo enpoint
