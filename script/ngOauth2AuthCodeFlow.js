@@ -78,8 +78,8 @@ ngOauth2AuthCodeFlow.config(['$httpProvider', function($httpProvider) {
 				if( !shouldProcess(config.url) )
 					return config;
 				
-				var oauth2Service = $injector.get('oauth2Service');
-				return oauth2Service.getAccessToken().then(
+				var Oauth2AuthCodeFlowService = $injector.get('Oauth2AuthCodeFlowService');
+				return Oauth2AuthCodeFlowService.getAccessToken().then(
 						function(token) {
 							config.headers.authorization = "Bearer " + token;
 							return config;
@@ -96,11 +96,11 @@ ngOauth2AuthCodeFlow.config(['$httpProvider', function($httpProvider) {
 			
 			responseError: function(response) {
 				if( response.status == 403 && shouldProcess(response.config.url) ) {
-					var oauth2Service = $injector.get('oauth2Service');
+					var Oauth2AuthCodeFlowService = $injector.get('Oauth2AuthCodeFlowService');
 					var $http = $injector.get('$http');
 					var $window = $injector.get('$window');
 					var deferred = $q.defer();
-					oauth2Service.refreshToken().then(deferred.resolve, deferred.reject);
+					Oauth2AuthCodeFlowService.refreshToken().then(deferred.resolve, deferred.reject);
 					return deferred.promise.then(
 							function(token) {
 								return $http(response.config);
@@ -109,7 +109,7 @@ ngOauth2AuthCodeFlow.config(['$httpProvider', function($httpProvider) {
 								var deferred = $q.defer();
 								deferred.reject({
 									code: "oauth2.needs_reconnect",
-									reconnectUrl: oauth2Service.initEndPoint + "?redirect_url=" + encodeURIComponent($window.location)
+									reconnectUrl: Oauth2AuthCodeFlowService.initEndPoint + "?redirect_url=" + encodeURIComponent($window.location)
 								});
 								return deferred.promise;
 							}
