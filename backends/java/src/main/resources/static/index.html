@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html ng-app="sampleApp">
+<head>
+	<meta charset="utf-8">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-resource.js"></script>
+	<script src="app/ngOauth2AuthCodeFlow.js"></script>
+	<script src="app/app.js"></script>
+</head>
+<body ng-controller="SampleController as ctrl">
+	<div ng-show="ctrl.alerte != null">
+		{{ctrl.alerte}}
+	</div>
+	<div ng-show="ctrl.reconnectUrl != null">
+		You have to re-log 
+		<a ng-href="{{ctrl.reconnectUrl}}">Click here</a>
+	</div>
+	
+	<hr/>
+	
+	<div>
+		OpenID userInfo endpoint : {{ctrl.param.userInfoEndPoint}}
+	</div>
+	<div>
+		Access Token : {{ctrl.accessToken}}
+	</div>
+	
+	<hr/>
+	
+	<span>Current user :</span>
+	<span ng-show="ctrl.userInfo == null">Click the button to extract it from the userInfo endpoint</span>
+	<span ng-show="ctrl.userInfo != null">{{ctrl.userInfo.name}}</span>
+	<button ng-click="ctrl.loadUserInfo()">
+		Extract current user name from openid userInfo enpoint
+	</button>
+</body>
+</html>
