@@ -25,13 +25,18 @@ You can get the war file from the github releases, or generate it yourself from 
 
 Before deploying it, you will have to configure it. The code is using Spring Boot, so you will have to define a set of properties :
 
-- oauth2.client.endpoints.authorize = *URL of your OAuth2 Authorization Server /authorize endpoint*
-- oauth2.client.endpoints.token = *URL of your OAuth2 Authorization Server /token endpoint*
+- oauth2.client.endpoints.authorize.url = *URL of your OAuth2 Authorization Server /authorize endpoint*
+- oauth2.client.endpoints.authorize.accessType = *When using Google Clous OAUTH2, set this value to 'offline' if you want a refresh token*
+- oauth2.client.endpoints.token.url = *URL of your OAuth2 Authorization Server /token endpoint*
+- oauth2.client.endpoints.token.authMode = *One of "basic"/"queryString"/"none". This is the way the secret will be passed to the token endpoint.*
+	- "basic" : It will besent to the "Authorization Basic" header. The client_id will NOT be passed in the query string.
+	- "queryString" : It will be passed along the "client_id" in the query string, in the "client_secret" parameter.
+	- "none" : Only the "client_id" will be passed in the query string.
+- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
+- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
 - oauth2.client.clientId = *Your oauth2 client application id*
 - oauth2.client.secret = *Your oauth2 client application secret*
 - oauth2.client.redirectURI = *URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.*
-- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
-- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
 
 This values can be defined as simple Environment Variables at the OS level. Or, if deploying into tomcat, you can add context.xml file in the configuration. This is my prefered way :
 
@@ -49,8 +54,14 @@ This values can be defined as simple Environment Variables at the OS level. Or, 
 				"oauth2": {
 					"client": {
 						"endpoints": {
-							"authorize": "URL of your OAuth2 Authorization Server /authorize endpoint",
-							"token": "URL of your OAuth2 Authorization Server /token endpoint"
+							"authorize": {
+								"url" : "URL of your OAuth2 Authorization Server /authorize endpoint",
+								"accessType" : "When using Google Clous OAUTH2, set this value to 'offline' if you want a refresh token"
+							},
+							"token": {
+								"url" : "URL of your OAuth2 Authorization Server /token endpoint",
+								"authMode" : "basic/queryString/none"
+							}
 						},
 						"clientId": "Your oauth2 client application id",
 						"secret": "Your oauth2 client application secret",

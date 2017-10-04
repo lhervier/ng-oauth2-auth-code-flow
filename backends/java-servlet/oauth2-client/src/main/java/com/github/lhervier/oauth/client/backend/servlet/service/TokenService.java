@@ -15,6 +15,10 @@ public class TokenService {
 	@Autowired
 	private HttpSession session;
 
+	public String getSessionId() {
+		return session.getId();
+	}
+	
 	public String getAccessToken() {
 		return (String) session.getAttribute(ATTR_ACCESS_TOKEN);
 	}

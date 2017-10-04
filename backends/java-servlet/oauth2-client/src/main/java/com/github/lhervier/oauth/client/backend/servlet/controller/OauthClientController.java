@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.github.lhervier.oauth.client.backend.servlet.ex.AuthorizeException;
 import com.github.lhervier.oauth.client.backend.servlet.ex.GrantException;
 import com.github.lhervier.oauth.client.backend.servlet.model.AuthorizeError;
+import com.github.lhervier.oauth.client.backend.servlet.model.GrantError;
 import com.github.lhervier.oauth.client.backend.servlet.model.GrantResponse;
 import com.github.lhervier.oauth.client.backend.servlet.service.TokenService;
 import com.github.lhervier.oauth.client.backend.servlet.utils.Utils;
@@ -34,12 +34,18 @@ import com.github.lhervier.oauth.client.backend.servlet.utils.Utils;
 @RequestMapping(value = "/")
 public class OauthClientController {
 
-	@Value("${oauth2.client.endpoints.authorize}")
-	private String authorizeEP;
+	@Value("${oauth2.client.endpoints.authorize.url}")
+	private String authorizeUrl;
 
-	@Value("${oauth2.client.endpoints.token}")
-	private String tokenEP;
-
+	@Value("${oauth2.client.endpoints.authorize.accessType}")
+	private String authorizeAccessType;
+	
+	@Value("${oauth2.client.endpoints.token.url}")
+	private String tokenUrl;
+	
+	@Value("${oauth2.client.endpoints.token.authMode}")
+	private String tokenAuthMode;
+	
 	@Value("${oauth2.client.clientId}")
 	private String clientId;
 
@@ -89,20 +95,28 @@ public class OauthClientController {
 		if (!StringUtils.isEmpty(code)) {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-			if( !StringUtils.isEmpty(this.secret) )
+			if( "basic".equals(this.tokenAuthMode) )
 				headers.add("Authorization", "Basic " + this.secret);
-
+			
 			MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
 			map.add("grant_type", "authorization_code");
-			map.add("client_id", this.clientId);
+			if( "none".equals(this.tokenAuthMode) || "queryString".equals(this.tokenAuthMode) )
+				map.add("client_id", this.clientId);
+			if( "queryString".equals(this.tokenAuthMode) )
+				map.add("client_secret", this.secret);
 			map.add("redirect_uri", this.redirectUri);
 			map.add("code", code);
-
+			
 			HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 			
-			ResponseEntity<GrantResponse> entity = this.template.postForEntity(this.tokenEP, request, GrantResponse.class);
+			ResponseEntity<GrantResponse> entity = this.template.postForEntity(this.tokenUrl, request, GrantResponse.class);
 			GrantResponse resp = entity.getBody();
 			if( entity.getStatusCode() == HttpStatus.OK ) {
+				if( !Utils.checkIdTokenNonce(resp.getIdToken(), this.tokenSvc.getSessionId()) ) {
+					GrantError e = new GrantError();
+					e.setError("invalid_id_token");
+					throw new GrantException(e);
+				}
 				this.tokenSvc.setAccessToken(resp.getAccessToken());
 				this.tokenSvc.setRefreshToken(resp.getRefreshToken());
 				this.tokenSvc.setIdToken(resp.getIdToken());
@@ -115,8 +129,8 @@ public class OauthClientController {
 		
 		// Otherwise, redirect to authorize endpoint
 		try {
-			URL authorize = new URL(this.authorizeEP);
-	        UriComponents uri = UriComponentsBuilder
+			URL authorize = new URL(this.authorizeUrl);
+			UriComponentsBuilder builder = UriComponentsBuilder
 	                .newInstance()
 	                .scheme(authorize.getProtocol())
 	                .host(authorize.getHost())
@@ -127,8 +141,11 @@ public class OauthClientController {
 	                .queryParam("redirect_uri", Utils.urlEncode(this.redirectUri))
 	                .queryParam("scope", this.scope)
 	                .queryParam("state", Utils.urlEncode(redirectUrl))
-	                .build();
-	        return new ModelAndView("redirect:" + uri.toString());
+	                .queryParam("nonce", this.tokenSvc.getSessionId());
+			if( !StringUtils.isEmpty(this.authorizeAccessType) )
+				builder.queryParam("access_type", this.authorizeAccessType);
+	        
+	        return new ModelAndView("redirect:" + builder.build().toString());
 		} catch(MalformedURLException e) {
 			throw new RuntimeException(e);
 		}
@@ -180,7 +197,7 @@ public class OauthClientController {
 		
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers);
 		
-		ResponseEntity<GrantResponse> entity = this.template.postForEntity(this.tokenEP, request, GrantResponse.class);
+		ResponseEntity<GrantResponse> entity = this.template.postForEntity(this.tokenUrl, request, GrantResponse.class);
 		GrantResponse resp = entity.getBody();
 		if( entity.getStatusCode() == HttpStatus.OK ) {
 			this.tokenSvc.setAccessToken(resp.getAccessToken());
