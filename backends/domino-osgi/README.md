@@ -125,13 +125,19 @@ Second option : You can generate the sample database from the source code :
 
 And third option : You can create a brand new NSF.
 
-### The parameter view :
+### The configuration document :
 
-Your database MUST have a view named "Oauth2Params". And this view must contain a single document. The list of fields present in the document will be described later (in the configuration part of this chapter).
+Your database MUST have a view named "Oauth2Params". And this view MUST contain a single document. The list of fields present in the document will be described later (in the configuration part of this chapter).
+If this is not the case, the endpoints will respond with a http 404 error.
 
-The easiest way to create it is to copy/paste the "Oauth2Params" view and the "Oauth2Param" form from the sample database.
+For security reason, it is recommanded to protect this document with a Reader field. The only persons who will access this document are :
 
-Note that endpoints will only be available on databases that contains this view.
+- The administrator that will create the document
+- And the server itself (the osgi code that will read the values will use a notes session opened as the server itself).
+
+In the sample, we are using a [Admin] role in the ACL and in a reader field.
+
+The easiest way to create this document is to copy/paste the "Oauth2Params" view and the "Oauth2Param" form from the sample database.
 
 ### ACL warning
 
