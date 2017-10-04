@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/com.github.lhervier.domino.oauth.client.feature_1.0.0.qualifier.jar" id="com.github.lhervier.domino.oauth.client.feature" version="1.0.0.qualifier"/>
+</site>
