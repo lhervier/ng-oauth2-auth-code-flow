@@ -17,7 +17,7 @@ sampleApp.controller(
   
   this.callRestApi = function() {
     // Interceptor will add the "Authorization Bearer" header for us !
-    $resource('http://login.privatenetwork.net/oauth2-server/userInfo').get(
+    $resource('http://apis.acme.com/myRestApi').get(
         function(jsonResponse) {
           ths.jsonResponse = JSON.stringify(jsonResponse);
         },
