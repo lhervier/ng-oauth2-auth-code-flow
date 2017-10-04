@@ -132,7 +132,7 @@ Once done, its answer must be the same as the answer of the "/tokens" endpoint.
 
 A set of implementations of those endpoints are provided with this project :
 
-- A Java webapp that can be ran on any Tomcat server.
+- A Java webapp that can be ran on any Tomcat server [README](backends/java-servlet/README.md)
 - A IBM Domino Osgi plugin that exposes the endpoints as servlets [README](backends/domino-osgi/README.md)
 
 Each have their own README.md file, so, just have a look.
