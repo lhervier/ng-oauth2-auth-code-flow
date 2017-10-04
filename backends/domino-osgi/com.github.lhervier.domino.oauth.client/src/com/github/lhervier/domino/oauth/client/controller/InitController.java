@@ -1,7 +1,6 @@
 package com.github.lhervier.domino.oauth.client.controller;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,21 +10,21 @@ import javax.servlet.http.HttpSession;
 import lotus.domino.NotesException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.github.lhervier.domino.oauth.client.Oauth2ClientProperties;
 import com.github.lhervier.domino.oauth.client.ex.OauthClientException;
 import com.github.lhervier.domino.oauth.client.model.AuthorizeError;
 import com.github.lhervier.domino.oauth.client.model.GrantError;
 import com.github.lhervier.domino.oauth.client.model.GrantResponse;
+import com.github.lhervier.domino.oauth.client.service.TokenService;
 import com.github.lhervier.domino.oauth.client.utils.Callback;
 import com.github.lhervier.domino.oauth.client.utils.QueryStringUtils;
 import com.github.lhervier.domino.oauth.client.utils.StringUtils;
 import com.github.lhervier.domino.oauth.client.utils.Utils;
-import com.github.lhervier.domino.spring.servlet.NotesContext;
 
 @Controller
 public class InitController {
@@ -43,16 +42,16 @@ public class InitController {
 	private HttpSession session;
 	
 	/**
-	 * The notes context
-	 */
-	@Autowired
-	private NotesContext notesContext;
-	
-	/**
 	 * Spring environment
 	 */
 	@Autowired
-	private Environment env;
+	private Oauth2ClientProperties props;
+	
+	/**
+	 * The token service
+	 */
+	@Autowired
+	private TokenService tokenSvc;
 	
 	/**
 	 * Initialisation
@@ -80,16 +79,20 @@ public class InitController {
 		}
 		
 		// Otherwise, we redirect to the authorize endpoint
-		String authorizeEndPoint = this.env.getProperty("oauth2.client.endpoints.authorize");
-		String redirectUri = Utils.getEncodedRedirectUri(this.env.getProperty("oauth2.client.redirectURI"));
-		String clientId = this.env.getProperty("oauth2.client.clientId");
+		String authorizeEndPoint = this.props.getAuthorizeUrl();
+		String redirectUri = Utils.getEncodedRedirectUri(this.props.getRedirectUri());
+		String clientId = this.props.getClientId();
 		String encodedRedirectUrl = Utils.urlEncode(redirectUrl);
 		String fullRedirectUri = authorizeEndPoint + "?" +
-					"response_type=" + env.getProperty("oauth2.client.responseType") + "&" +
+					"response_type=" + this.props.getResponseType() + "&" +
 					"redirect_uri=" + redirectUri + "&" +
 					"client_id=" + clientId + "&" +
-					"scope=" + this.env.getProperty("oauth2.client.scope") + "&" +
-					"state=" + encodedRedirectUrl;
+					"scope=" + this.props.getScope() + "&" +
+					"state=" + encodedRedirectUrl + "&" +
+					"nonce=" + session.getId();
+		if( !StringUtils.isEmpty(this.props.getAuthorizeAccessType()) )
+			fullRedirectUri += "&access_type=" + this.props.getAuthorizeAccessType();
+		
 		return new ModelAndView("redirect:" + fullRedirectUri);
 	}
 	
@@ -102,45 +105,50 @@ public class InitController {
 	 */
 	private ModelAndView processAuthorizationCode(final String code, final String redirectUrl) throws OauthClientException {
 		try {
+			// The response object
 			final ModelAndView ret = new ModelAndView();
-			Utils.createConnection(
-					this.notesContext.getServerSession(), 
-					Boolean.parseBoolean(this.env.getProperty("oauth2.client.disableHostVerifier")), 
-					this.env.getProperty("oauth2.client.secret"),
-					this.env.getProperty("oauth2.client.endpoints.token"))
-					.setTextContent(
-							new StringBuffer()
-									.append("grant_type=authorization_code&")
-									.append("code=").append(code).append('&')
-									// .append("client_id=").append(this.initParamsBean.getClientId()).append('&')		// Not mandatory
-									.append("redirect_uri=").append(Utils.getEncodedRedirectUri(this.env.getProperty("oauth2.client.baseURI")))
-									.toString(), 
-							"UTF-8"
-					)
+			
+			// Create the connection
+			this.tokenSvc.createTokenConnection(
+					"grant_type=authorization_code" +
+					"&code=" + code +
+					"&redirect_uri=" + Utils.getEncodedRedirectUri(this.props.getRedirectUri())
+			)
+			
+			// OK => Mémorise les tokens en session et redirige vers l'url initiale
+			.onOk(new Callback<GrantResponse>() {
+				@Override
+				public void run(GrantResponse grant) throws Exception {
+					if( !"Bearer".equalsIgnoreCase(grant.getTokenType()) )
+						throw new RuntimeException("Le seul type de token géré est 'Bearer'... (et j'ai '"  + grant.getTokenType() + "')");
 					
-					// OK => Mémorise les tokens en session et redirige vers l'url initiale
-					.onOk(new Callback<GrantResponse>() {
-						@Override
-						public void run(GrantResponse grant) throws IOException, ParseException {
-							if( !"Bearer".equalsIgnoreCase(grant.getTokenType()) )
-								throw new RuntimeException("Le seul type de token géré est 'Bearer'... (et j'ai '"  + grant.getTokenType() + "')");
-							InitController.this.session.setAttribute("ACCESS_TOKEN", grant.getAccessToken());
-							InitController.this.session.setAttribute("REFRESH_TOKEN", grant.getRefreshToken());
-							InitController.this.session.setAttribute("ID_TOKEN", grant.getIdToken());
-							ret.setViewName("redirect:" + redirectUrl);
-						}
-					})
-					
-					// KO => Affiche l'erreur dans la XPage
-					.onError(new Callback<GrantError>() {
-						@Override
-						public void run(GrantError error) throws IOException {
-							ret.addObject("error", error);
-							ret.setViewName("grantError");
-						}
-					})
-					
-					.execute();
+					// If we have an id_token in the response, we must check the nonce value
+					if( !Utils.checkIdTokenNonce(grant.getIdToken(), InitController.this.session.getId()) ) {
+						GrantError error = new GrantError();
+						error.setError("invalid_nonce_in_id_token");
+						ret.addObject("error", error);
+						ret.setViewName("grantError");
+					} else {
+						InitController.this.session.setAttribute("ACCESS_TOKEN", grant.getAccessToken());
+						InitController.this.session.setAttribute("REFRESH_TOKEN", grant.getRefreshToken());
+						InitController.this.session.setAttribute("ID_TOKEN", grant.getIdToken());
+						ret.setViewName("redirect:" + redirectUrl);
+					}
+				}
+			})
+			
+			// KO => Affiche l'erreur dans la XPage
+			.onError(new Callback<GrantError>() {
+				@Override
+				public void run(GrantError error) throws IOException {
+					ret.addObject("error", error);
+					ret.setViewName("grantError");
+				}
+			})
+			
+			// Send the request
+			.execute();
+			
 			return ret;
 		} catch(IOException e) {
 			throw new OauthClientException(e);

@@ -1,35 +1,77 @@
 package com.github.lhervier.domino.oauth.client.utils;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.xml.bind.DatatypeConverter;
 
-import lotus.domino.Session;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 
-import com.github.lhervier.domino.oauth.client.Constants;
-import com.github.lhervier.domino.oauth.client.model.GrantError;
-import com.github.lhervier.domino.oauth.client.model.GrantResponse;
+import com.github.lhervier.domino.oauth.client.ex.OauthClientException;
 
 public class Utils {
 
 	/**
-	 * Est ce que le contexte SSL a été initialisé ?
+	 * An idtoken with a nonce attribute
 	 */
-	private static boolean sslInitialized = false;
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	public static class NonceIdToken {
+		private String nonce;
+		public String getNonce() { return nonce; }
+		public void setNonce(String nonce) { this.nonce = nonce; }
+	}
 	
 	/**
-	 * Est ce qu'on doit désactiver la vérification des certificats SSL
+	 * Check that the nonce parameter of an idToken is coherent
+	 * @param idToken
+	 * @param nonce
 	 */
-	private static boolean disableCheckCertificate = false;
+	public static final boolean checkIdTokenNonce(String idToken, String nonce) throws OauthClientException {
+		if( idToken == null )
+			return true;
+		if( nonce == null )
+			return true;
+		
+		int pos = idToken.indexOf('.');
+		int pos2 = idToken.lastIndexOf('.');
+		
+		// Invalid id token
+		if( pos == -1 || pos2 == -1 )
+			throw new OauthClientException("Invalid IdToken");
+		if( pos == pos2 )
+			throw new OauthClientException("Invalid IdToken");
+		
+		String payload = b64Decode(idToken.substring(pos + 1, pos2));
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			NonceIdToken n = mapper.readValue(payload, NonceIdToken.class);
+			return nonce.equals(n.getNonce());
+		} catch (JsonParseException e) {
+			throw new OauthClientException(e);
+		} catch (JsonMappingException e) {
+			throw new OauthClientException(e);
+		} catch (IOException e) {
+			throw new OauthClientException(e);
+		}
+	}
+	
+	/**
+	 * Decode a base64 string
+	 * @param s the source string (base64 encoded)
+	 * @return the decoded string
+	 */
+	public static final String b64Decode(String s) {
+		byte[] decoded = DatatypeConverter.parseBase64Binary(s);
+		try {
+			return new String(decoded, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);		// UTF-8 is supported !
+		}
+	}
 	
 	/**
 	 * URL encode a value
@@ -46,111 +88,11 @@ public class Utils {
 	
 	/**
 	 * Retourne l'URL de redirection
-	 * @param baseUri
+	 * @param redirectUri
 	 * @return l'url de redirection
 	 * @throws UnsupportedEncodingException 
 	 */
-	public static final String getEncodedRedirectUri(String baseUri) {
-		StringBuffer redirectUri = new StringBuffer();
-		redirectUri.append(baseUri);
-		if( !baseUri.endsWith("/") )
-			redirectUri.append('/');
-		redirectUri.append("oauth2-client/init");
+	public static final String getEncodedRedirectUri(String redirectUri) {
 		return urlEncode(redirectUri.toString());
-	}
-	
-	/**
-	 * Pour initialiser le contexte SSL.
-	 * On ne l'initialise qu'une seule fois. Pour revenir en arrière, il
-	 * faut relancer la tâche http.
-	 * @param session a session that allows us to access the notes.ini
-	 * @return le contexte SSL
-	 */
-	private final static synchronized SSLSocketFactory getSSLSocketFactory(Session session) {
-		// On a déjà initialisé le contexte
-		if( sslInitialized ) {
-			if( !disableCheckCertificate )
-				return null;
-			
-			SSLContext context;
-			try {
-				context = SSLContext.getInstance("SSL");
-			} catch (NoSuchAlgorithmException e) {
-				throw new RuntimeException(e);
-			}
-			return context.getSocketFactory();
-		}
-		
-		// A partie de là, SSL sera initialisé
-		sslInitialized = true;
-		disableCheckCertificate = disableCheckCertificate(session);
-		
-		// On ne doit pas désactiver la vérification
-		if( !disableCheckCertificate ) {
-			return null;
-		}
-		
-		// On doit désactiver la vérification
-		// Ca se fait au niveau de la JVM. Impossible de revenir dessus.
-		try {
-			SSLContext context = SSLContext.getInstance("SSL");
-			TrustManager[] trustAll = new TrustManager[] { new X509TrustManager() {
-	            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-	                return null;
-	            }
-	            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-	            }
-	            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-	            }
-	        }};
-			context.init(null, trustAll, new SecureRandom());
-			return context.getSocketFactory();
-		} catch (KeyManagementException e) {
-			throw new RuntimeException(e);
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	/**
-	 * Est ce qu'on doit désactiver les certificats SSL ?
-	 * @param session a session that allows us to access the notes.ini
-	 */
-	private static final boolean disableCheckCertificate(Session session) {
-		return DominoUtils.getEnvironment(
-				session, 
-				Constants.NOTES_INI_DISABLE_CHECK_CERTIFICATE, 
-				Boolean.class,
-				false
-		);
-	}
-	
-	/**
-	 * Pour initialiser un GET
-	 * @param session a session that allows us to access the notes.ini
-	 * @param disableHostVerifier 
-	 * @param url l'url
-	 * @return la connection
-	 */
-	public static final HttpConnection<GrantResponse, GrantError> createConnection(
-			Session session, 
-			boolean disableHostVerifier, 
-			String secret,
-			String url) {
-		HostnameVerifier verifier = null;
-		if( disableHostVerifier ) {
-			verifier = new HostnameVerifier() {
-				@Override
-				public boolean verify(String hostname, SSLSession session) {
-					return true;
-				}
-			};
-		}
-		
-		return HttpConnection.createConnection(url, GrantResponse.class, GrantError.class)
-				.addHeader("Authorization", "Basic " + secret)
-				.addHeader("Content-Type", "application/x-www-form-urlencoded")
-				.withVerifier(verifier)
-				.withFactory(getSSLSocketFactory(session));
 	}
 }

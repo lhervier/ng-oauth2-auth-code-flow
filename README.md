@@ -128,18 +128,87 @@ Again, this is server to server communication.
 
 Once done, its answer must be the same as the answer of the "/tokens" endpoint.
 
-## Sample implementations
+# Implementations
 
-A set of sample implementations of those endpoints are provided with this project :
+A set of implementations of those endpoints are provided with this project :
 
 - A Java webapp that can be ran on any Tomcat server.
 - A IBM Domino Osgi plugin that exposes the endpoints as servlets [README](backends/domino-osgi/README.md)
 
 Each have their own README.md file, so, just have a look.
 
+## The awaited properties
+
+Each implementation needs to be configured with the following properties :
+
+- oauth2.client.endpoints.authorize.url = *URL of your OAuth2 Authorization Server /authorize endpoint*
+- oauth2.client.endpoints.authorize.accessType = *When using Google Clous OAUTH2, set this value to 'offline' if you want a refresh token*
+- oauth2.client.endpoints.token.url = *URL of your OAuth2 Authorization Server /token endpoint*
+- oauth2.client.endpoints.token.authMode = *One of "basic"/"queryString"/"none". This is the way the secret will be passed to the token endpoint.*
+	- "basic" : It will besent to the "Authorization Basic" header. The client_id will NOT be passed in the query string.
+	- "queryString" : It will be passed along the "client_id" in the query string, in the "client_secret" parameter.
+	- "none" : Only the "client_id" will be passed in the query string.
+- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
+- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
+- oauth2.client.clientId = *Your oauth2 client application id*
+- oauth2.client.secret = *Your oauth2 client application secret*
+- oauth2.client.redirectURI = *URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.*
+
+## Values of the properties when using Google Cloud 
+
+To plug the sample apps into a google cloud environment, it's pretty easy.
+
+The endpoints are available at this URL :
+
+	https://accounts.google.com/.well-known/openid-configuration
+
+You will find the authorize and the token endpoint in the JSON.
+
+The access type must be set to "offline" if you wan a refresh token. This is not present in OAUTH2 RFC...
+
+The token authMode must be set to "queryString", as described in this document (Go to Step 2.0) :
+
+	https://developers.google.com/identity/protocols/OAuth2WebServer
+
+The responseType must be set to "code", and the scope must be set to "openid" if you want to be able to validate the provided access token.
+	
+Then, to declare your application, go to the google cloud console : 
+
+	https://console.developers.google.com
+	
+In the "credentials" part, click the "create credentials" button, and select "OAuth client Id". Choose "Web application", enter a name and your __redirect uri__ (the url of your local "/init" endpoint). 
+Click "create", and Google will display your __client id__ and __client secret__.
+
+Then, you can update the sample app (app.js file) to make it access the openid userInfo endpoint (which is a good example of an API that works with an bearer access token). 
+You will find it in the JSON, alongside the other endpoints urls.
+
+## Values of the properties when using Facebook 
+
+TBD
+
+## Values of the properties when using LinkedIn
+
+TBD
+
+## Values of the properties when using GitHub
+
+TBD
+
+## Values of the properties when using Microsoft Azure AD
+
+TBD
+
+## Values of the properties when using a local Microsoft ADFS
+
+TBD
+
+## Values of the properties when using Domino OAUTH2 Authorization Server
+
+TBD
+
 # How to use the angular module
 
-Once you have your three endpoints, you are ready to go.
+Once you have your three endpoints, and your backends are configured properly, you are ready to go.
 
 Include the javascript file with the other modules in your HTML template. In a near future, it should be available with bower.
 

@@ -167,13 +167,18 @@ Have a look at the sample database. You will probably have to adapte the URL of 
 
 In the Oauth2Params view, you will have to create a single document with the following fields (which corresponds to spring properties) :
 
-- oauth2.client.endpoints.authorize = *URL of your OAuth2 Authorization Server /authorize endpoint*
-- oauth2.client.endpoints.token = *URL of your OAuth2 Authorization Server /token endpoint*
+- oauth2.client.endpoints.authorize.url = *URL of your OAuth2 Authorization Server /authorize endpoint*
+- oauth2.client.endpoints.authorize.accessType = *When using Google Clous OAUTH2, set this value to 'offline' if you want a refresh token*
+- oauth2.client.endpoints.token.url = *URL of your OAuth2 Authorization Server /token endpoint*
+- oauth2.client.endpoints.token.authMode = *One of "basic"/"queryString"/"none". This is the way the secret will be passed to the token endpoint.*
+	- "basic" : It will besent to the "Authorization Basic" header. The client_id will NOT be passed in the query string.
+	- "queryString" : It will be passed along the "client_id" in the query string, in the "client_secret" parameter.
+	- "none" : Only the "client_id" will be passed in the query string.
+- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
+- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
 - oauth2.client.clientId = *Your oauth2 client application id*
 - oauth2.client.secret = *Your oauth2 client application secret*
 - oauth2.client.redirectURI = *URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.*
-- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
-- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
 
 Again, the easiest way is to use the OAuth2Param form available in the sample database.
 

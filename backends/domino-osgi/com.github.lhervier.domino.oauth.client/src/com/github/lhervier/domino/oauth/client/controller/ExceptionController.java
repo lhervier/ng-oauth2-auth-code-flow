@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -23,8 +22,11 @@ public class ExceptionController {
 	 * Handle wrong path exceptions sending a 404 error
 	 */
 	@ExceptionHandler(WrongPathException.class)
-	public ResponseEntity<Void> handleWrongPathException(WrongPathException e) {
-		return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
+	@ResponseStatus(value = HttpStatus.NOT_FOUND)
+	public ModelAndView handleWrongPathException(WrongPathException e) {
+		Map<String, Object> model = new HashMap<String, Object>();
+		model.put("error", "not_found");
+		return new ModelAndView("error", model);
 	}
 	
 	/**

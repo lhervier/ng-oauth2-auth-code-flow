@@ -9,7 +9,6 @@ import javax.servlet.http.HttpSession;
 import lotus.domino.NotesException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -21,10 +20,9 @@ import com.github.lhervier.domino.oauth.client.ex.RefreshTokenException;
 import com.github.lhervier.domino.oauth.client.model.GrantError;
 import com.github.lhervier.domino.oauth.client.model.GrantResponse;
 import com.github.lhervier.domino.oauth.client.model.TokensResponse;
+import com.github.lhervier.domino.oauth.client.service.TokenService;
 import com.github.lhervier.domino.oauth.client.utils.Callback;
-import com.github.lhervier.domino.oauth.client.utils.Utils;
 import com.github.lhervier.domino.oauth.client.utils.ValueHolder;
-import com.github.lhervier.domino.spring.servlet.NotesContext;
 
 @Controller
 public class RefreshController {
@@ -36,22 +34,16 @@ public class RefreshController {
 	private HttpSession httpSession;
 	
 	/**
-	 * The notes context
-	 */
-	@Autowired
-	private NotesContext notesContext;
-	
-	/**
-	 * The spring environment
-	 */
-	@Autowired
-	private Environment env;
-	
-	/**
 	 * The token controller
 	 */
 	@Autowired
 	private TokenController tokenCtrl;
+	
+	/**
+	 * The token service
+	 */
+	@Autowired
+	private TokenService tokenSvc;
 	
 	/**
 	 * Refresh the token
@@ -69,18 +61,9 @@ public class RefreshController {
 				return this.tokenCtrl.tokens();
 			
 			final ValueHolder<RefreshTokenException> ex = new ValueHolder<RefreshTokenException>();
-			Utils.createConnection(
-					this.notesContext.getServerSession(), 
-					Boolean.parseBoolean(this.env.getProperty("oauth2.client.disableHostVerifier")), 
-					this.env.getProperty("oauth2.client.secret"),
-					this.env.getProperty("oauth2.client.endpoints.token")
-			)
-			.setTextContent(
-					new StringBuffer()
-							.append("grant_type=refresh_token&")
-							.append("refresh_token=").append(refreshToken)
-							.toString(), 
-					"UTF-8"
+			this.tokenSvc.createTokenConnection(
+					"grant_type=refresh_token&" +
+					"refresh_token=" + refreshToken
 			)
 			
 			// OK => Met à jour la session et retourne le token

@@ -5,20 +5,21 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import com.github.lhervier.domino.oauth.client.Oauth2ClientProperties;
 import com.github.lhervier.domino.oauth.client.ex.WrongPathException;
+import com.github.lhervier.domino.oauth.client.utils.StringUtils;
 
 @Component
 @Aspect
 public class DbCheckAspect {
 
 	/**
-	 * The spring environment
+	 * The database properties
 	 */
 	@Autowired
-	private Environment env;
+	private Oauth2ClientProperties props;
 	
 	/**
 	 * Pointcut to detect controller methods
@@ -35,7 +36,7 @@ public class DbCheckAspect {
 	 */
 	@Before("controller()")
 	public void checkDb(JoinPoint joinPoint) throws WrongPathException {
-		if( this.env.getProperty("oauth2.client.clientId") == null )
+		if( StringUtils.isEmpty(this.props.getClientId()) )
 			throw new WrongPathException();
 	}
 }
