@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+	<Environment
+			name="spring.application.json"
+			type="java.lang.String"
+			override="false"
+			value='{
+				"oauth2": {
+					"client": {
+						"endpoints": {
+							"authorize": "http://login.privatenetwork.net/oauth2.nsf/oauth2-server/authorize",
+							"token": "http://login.privatenetwork.net/oauth2.nsf/oauth2-server/token"
+						},
+						"clientId": "4cdd0fcf-1fc9-4c5d-b057-d30f5134a584",
+						"secret": "dG9tY2F0LWZyb250LXNhbXBsZS9BUFBMSUNBVElPTi9XRUI6ajBzYWUydWoxYTAwcm5xNjNjYmdjNTdiZ24=",
+						"redirectUri": "http://localhost:8080/front-sample/oauth2-client/init"
+					}
+				}
+			}'/>
+</Context>

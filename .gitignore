@@ -1,1 +1,3 @@
 backends/domino-osgi/com.github.lhervier.domino.oauth.client/bin
+backends/java-servlet/oauth2-client/target
+backends/java-servlet/front-sample/target
