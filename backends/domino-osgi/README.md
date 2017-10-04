@@ -1,14 +1,11 @@
 This is an implementation for IBM Domino of the endpoints needed by the AngularJS "ngOauth2AuthCodeFlow" module.
 Note that the endpoints are implemented as standard Spring controllers, thanks to the [domino-spring](https://github.com/lhervier/dom-spring) project.
 
-As such, once the plugins are installed, the endpoints will be made available on EVERY databases.
-To limit the availability, the endpoints will only respond when called on a database referenced in the "oauth2.client.databases" notes.ini variable.
-
 The endpoints will be as following :
 
-- "/init" endpoint : http://youserver/db.nsf/oauth2-client/init
-- "/tokens" endpoint : http://youserver/db.nsf/oauth2-client/tokens
-- "/refresh" endpoint : http://youserver/db.nsf/oauth2-client/refresh
+- "/init" endpoint : http://youserver/anydb.nsf/oauth2-client/init
+- "/tokens" endpoint : http://youserver/anydb.nsf/oauth2-client/tokens
+- "/refresh" endpoint : http://youserver/anydb.nsf/oauth2-client/refresh
 
 These values must be used when initializing the Oauth2AuthCodeFlowService.
 
@@ -16,8 +13,7 @@ The installation require multiple steps :
 
 - Install the domino-spring plugins on your server
 - Install the ngOauth2AuthCodeFlow endpoints plugins on your server
-- Create a database with a mandatory view and a mandatory form
-- Configure your database
+- Declare the needed spring properties : Add a "Oauth2Params" view that contains a single document with a set of fields whose name correspond to the needed properties.
 - Run...
 
 # Installing the domino-spring osgi plugins
@@ -45,7 +41,7 @@ If it answers something, you're good to go.
 
 ## Optional : Install plugins on your Domino Designer
 
-Do this only if you plan to play with the code of the osgi plugins... Otherwise, skip this chapter.
+Do this only if you plan to play with the code of the osgi plugin... Otherwise, skip this chapter.
 
 - Check that your Designer allows you to add plugins :
 	- Go to File / Preferences
@@ -108,15 +104,17 @@ If it answers something, you're good to go.
 
 # Creating a database that is "ngOauth2AuthCodeFlow" ready
 
-Such databases are not using XPages, or good old "Forms and Views" to generate the interface. 
-Here, we are talking about databases that contains html/css/js files (preferably stored in the WebContent folder accessible from the package explorer), 
-and XPages or Agents or whatever you want to publish rest like services. And of course, you client js code will use AngularJS $http and $resource to access the services. 
+Such databases are not using XPages, or good old "Forms and Views" to generate the user interface. 
+Here, we are talking about databases that contains :
 
-Adding the ngOauth2AuthCodeFlow module (and initializing its service) will allow you to access other Rest services hosted on another server (as long as the server is configured to accept oauth2 access tokens).
+- html/css/js files, preferably stored in the WebContent folder accessible from the package explorer.
+- The client AngularJS code will use normal $http and $resource to access the services : 
+	- XPages or Agents or whatever you want to publish rest like services.
+	- And Rest services configured on other hosts that will wait for bearer tokens in the authorization header.
 
-## Generate the NSF
+## Create the NSF
 
-First option : You can download the sample database from the github releases.
+First option : You can download a sample database from the github releases. 
 
 Second option : You can generate the sample database from the source code :
 
@@ -129,18 +127,11 @@ And third option : You can create a brand new NSF.
 
 ### The parameter view :
 
-Your database MUST have a view named "Oauth2Params". And this view must contain a single document. The list of fields present in the document will be described later (in the confguration part of this chapter).
+Your database MUST have a view named "Oauth2Params". And this view must contain a single document. The list of fields present in the document will be described later (in the configuration part of this chapter).
 
 The easiest way to create it is to copy/paste the "Oauth2Params" view and the "Oauth2Param" form from the sample database.
 
-### notes.ini declaration :
-
-Remember ? As our endpoints are osgi servlets, they are available on EVERY database stored on your server. 
-To prevent this, the servlets are checking if the current database is listed in a notes.ini variable. If it is not the case, the servlets returns a http 404 error.
-
-In conclusion, wWhen the database is created, declare it in the notes.ini of your server :
-
-	oauth2.client.databases=<names of your nsf, seperated with ",">
+Note that endpoints will only be available on databases that contains this view.
 
 ### ACL warning
 
@@ -149,8 +140,8 @@ The user will log in, after which the authorization server will redirect back ag
 
 In conclusion : If your database is protected by an ACL, the user will have to authenticate twice :
 
-- The first time to access the database (because of Domino ACL)
-- And again when opening a session on the OAUTH2 authorization server (Your Microsoft ADFS for example).
+- The first time when accessing the database : Because of Domino ACL, you will have the Domino login screen.
+- And again when opening a session on the OAUTH2 authorization server (Your Microsoft ADFS for example) : You will have the ADFS login screen (except if you configured SSO).
 
 For this reason, it is recommended to set Anonymous to reader in the ACL of the database that host the front end code. Then, write your Domino hosted Rest Services using domino-spring, and
 protect them with the access token. The code of the openid userInfo endpoint implemented in the [dom-auth-server](https://github.com/lhervier/dom-auth-server) project is a good starting 
@@ -158,9 +149,17 @@ point (look at the BearerSession spring bean).
 
 TODO: I will add later a github repository that contains example of Osgi/Domino and Java/Tomcat hosted sample rest services protected by an bearer token.
 
-# Configure your database
+### Other design elements
 
-In the Oauth2Params view, you will have to create a single document with the following fields :
+Using the package explorer, you can create a set of HTML/JS/CSS files in the WebContent folder.
+
+Don't forget to include the "NgOauth2AuthorizationCodeFlow" module. 
+
+Have a look at the sample database. You will probably have to adapte the URL of the external Rest API.
+
+## Configure your database
+
+In the Oauth2Params view, you will have to create a single document with the following fields (which corresponds to spring properties) :
 
 - oauth2.client.clientId = *Your oauth2 client application id*
 - oauth2.client.secret = *Your oauth2 client application secret*
@@ -171,19 +170,13 @@ In the Oauth2Params view, you will have to create a single document with the fol
 
 Again, the easiest way is to use the OAuth2Param form available in the sample database.
 
-The sample application needs another configuration document. Go to the "Params" view, and create it using the action button.
-You will have to enter the openid userInfo endpoint. This is for demonstration purpose only as the openid userInfo endpoint is often available.
-Becasue we are using this endpoint in the sample, we don't need to implement a protected rest service.
-
-# Test
+## Test
 
 Try accessing 
 
-	http://youserver/db.nsf/index.html
+	http://youserver/yourdb.nsf/index.html
 
 You will be redirected to your OAUTH2 authorization server login page, and - after logging - redirected back to your application.
-Clicking the button will use the openid userInfo endpoint to extract an id token from which we will find the current user name.
+Clicking the button will call the external rest service and display its json response inthe HTML.
 
 Note that the application also displays the access token. This is just for demonstration purpose.
-
-Also note that to access to the openid userInfo endpoint (in app.js), we are using a normal $resource call.

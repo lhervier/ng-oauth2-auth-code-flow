@@ -1,50 +1,51 @@
 var sampleApp = angular.module('sampleApp', ['ngOauth2AuthCodeFlow', 'ngResource']);
 
-sampleApp.controller('SampleController', ['$rootScope', '$resource', '$window', 'Oauth2AuthCodeFlowService', function($rootScope, $resource, $window, Oauth2AuthCodeFlowService) {
-	var ths = this;
-	
-	this.alerte = null;
-	this.reconnectUrl = null;
-	this.userInfo = null;
-	this.accessToken = null;
-	this.param = null;
-	
-	this.loadUserInfo = function() {
-		$resource(ths.param.userInfoEndPoint).get(
-				function(result) {
-					ths.userInfo = result;
-				},
-				function(reason) {
-					if( reason.code == "oauth2.needs_reconnect" )
-						ths.reconnectUrl = reason.reconnectUrl;
-					else
-						ths.alerte = "Erreur à la récupération des infos utilisateur : " + reason;
-				});
-	};
-	
-	// Charge le paramétrage
-	$resource('param.xsp').get(
-			function(param) {
-				ths.param = param;
-			},
-			function(reason) {
-				ths.alerte = "Erreur au chargement des paramètres de l'application : " + reason;
-			}
-	);
-	
-	// Initialise la danse oauth2. On force la reconnexion s'il n'est pas en session.
-	Oauth2AuthCodeFlowService.init('oauth2-client/init', 'oauth2-client/tokens', 'oauth2-client/refresh').then(
-			function(result) {
-				ths.accessToken = result.access_token;
-			},
-			function(reason) {
-				if( reason.code == "oauth2.needs_reconnect" )
-					$window.location = reason.reconnectUrl;
-				else
-					ths.alerte = "Erreur à l'initialisation de la danse oauth2";
-			}
-	);
+sampleApp.controller(
+    'SampleController', 
+    ['$rootScope', '$resource', '$window', 'Oauth2AuthCodeFlowService', 
+    function($rootScope, $resource, $window, Oauth2AuthCodeFlowService) {
+  var ths = this;
+  
+  // A message to display to the user
+  this.message = null;
+  // To display as a link to the user if it needs to reconnect.
+  this.reconnectUrl = null;
+  // The json response of the Rest API.
+  this.jsonResponse = null;
+  // The access token, in case you want to play with it (note that you DON'T have to)
+  this.accessToken = null;
+  
+  this.callRestApi = function() {
+    // Interceptor will add the "Authorization Bearer" header for us !
+    $resource('http://login.privatenetwork.net/oauth2-server/userInfo').get(
+        function(jsonResponse) {
+          ths.jsonResponse = JSON.stringify(jsonResponse);
+        },
+        function(reason) {
+          // User needs to reconnect. Refresh token is expired... 
+          // This case can be handled application wide by a custom interceptor.
+          if( reason.code == "oauth2.needs_reconnect" )
+            ths.reconnectUrl = reason.reconnectUrl;
+          else
+            ths.message = "Error calling rest api : " + reason;
+        }
+    );
+  };
+  
+  // Initialization of the OAUTH2 dance
+  Oauth2AuthCodeFlowService.init('oauth2-client/init', 'oauth2-client/tokens', 'oauth2-client/refresh').then(
+      function(result) {
+        // This is just for fun. We don't need the access token. 
+        // The interceptor handle it for you.
+        ths.accessToken = result.access_token;  
+      },
+      function(reason) {
+        // If reconnect is needed at startup, handle it the way you want 
+        // (display a message, or - in our case - redirect the browser)
+        if( reason.code == "oauth2.needs_reconnect" )
+          $window.location = reason.reconnectUrl;
+        else
+          ths.message = "Error initializing OAUTH2 dance";
+      }
+  );
 }]);
-
-
-
