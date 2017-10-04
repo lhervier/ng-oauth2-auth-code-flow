@@ -100,9 +100,9 @@ Such a parameter can be set by the oauth2 "/authorize" end point if the user can
 
 Do whatever you want in this case. The samples simply displays the error. 
 
-## The "/accessToken" end point
+## The "/tokens" end point
 
-This endpoint does not accept any parameter, and must return a JSON object that contains the access token. If no access token is available, it must return an empty JSON object.
+This endpoint does not accept any parameter, and must return a JSON object that contains the tokens (access token, and id token). If no access token is available, it must return an empty JSON object.
 
 Here is an example response :
 
@@ -119,7 +119,7 @@ Note that the refresh token is NOT present !
 This endpoint does not accept any parameter, and must use the refresh token (stored server side) to ask the oauth2 authorization server "/token" endpoint for a new set of tokens.
 This is server to server communication.
 
-Once done, its answer must be the same as the answer of the "/accessToken" endpoint.
+Once done, its answer must be the same as the answer of the "/tokens" endpoint.
 
 ## Sample implementations
 
@@ -142,7 +142,7 @@ Here is a sample Controller example :
 - Note that the "callRestApi" method uses a normal $resource call. The only specific code is to make it react when the refresh token has expired. And it could have been handled by another interceptor.
 - Note the use of the "init" method to which you will have to send the url of your three endpoints.
 	- "/init" endpoint is located at the relative url "oauth2-client/init"
-	- "/accessToken" endpoint is located at the relative url "oauth2-client/accessToken"
+	- "/tokens" endpoint is located at the relative url "oauth2-client/tokens"
 	- and "/refresh" endpoint is located at the relative url "oauth2-client/refresh"
 
 
