@@ -81,16 +81,16 @@ public class InitController {
 		
 		// Otherwise, we redirect to the authorize endpoint
 		String authorizeEndPoint = this.env.getProperty("oauth2.client.endpoints.authorize");
-		String baseUri = Utils.getEncodedRedirectUri(this.env.getProperty("oauth2.client.baseURI"));
+		String redirectUri = Utils.getEncodedRedirectUri(this.env.getProperty("oauth2.client.redirectURI"));
 		String clientId = this.env.getProperty("oauth2.client.clientId");
 		String encodedRedirectUrl = Utils.urlEncode(redirectUrl);
-		String redirectUri = authorizeEndPoint + "?" +
+		String fullRedirectUri = authorizeEndPoint + "?" +
 					"response_type=code+id_token&" +
-					"redirect_uri=" + baseUri + "&" +
+					"redirect_uri=" + redirectUri + "&" +
 					"client_id=" + clientId + "&" +
 					"scope=openid profile email address phone&" +
 					"state=" + encodedRedirectUrl;
-		return new ModelAndView("redirect:" + redirectUri);
+		return new ModelAndView("redirect:" + fullRedirectUri);
 	}
 	
 	/**

@@ -167,12 +167,11 @@ Have a look at the sample database. You will probably have to adapte the URL of 
 
 In the Oauth2Params view, you will have to create a single document with the following fields (which corresponds to spring properties) :
 
-- oauth2.client.clientId = *Your oauth2 client application id*
-- oauth2.client.secret = *Your oauth2 client application secret*
-- oauth2.client.baseURI = *URL used by the users to access your NSF. This is parameterized in case of reverse proxies*
 - oauth2.client.endpoints.authorize = *URL of your OAuth2 Authorization Server /authorize endpoint*
 - oauth2.client.endpoints.token = *URL of your OAuth2 Authorization Server /token endpoint*
-- oauth2.client.disableHostVerifier = *Set it to "1" if you have problems with your SSL certificates*
+- oauth2.client.clientId = *Your oauth2 client application id*
+- oauth2.client.secret = *Your oauth2 client application secret*
+- oauth2.client.redirectURI = *URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.*
 
 Again, the easiest way is to use the OAuth2Param form available in the sample database.
 
