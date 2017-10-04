@@ -18,7 +18,7 @@
 		var v = db.getView("Params");
 		var doc = v.getFirstDocument();
 		if( doc != null ) {
-			o.restServer = doc.getItemValueString("PARAM_RestServer");
+			o.userInfoEndPoint = doc.getItemValueString("PARAM_OpenIdUserInfo");
 		}
 		writer.write(toJson(o));
 		 

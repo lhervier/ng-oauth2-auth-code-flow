@@ -7,12 +7,8 @@ public class TokensResponse {
 	private String accessToken;
 	@JsonProperty("id_token")
 	private String idToken;
-	@JsonProperty("user_info_endpoint")
-	private String userInfoEndpoint;
 	public String getAccessToken() {return accessToken;}
 	public void setAccessToken(String accessToken) {this.accessToken = accessToken;}
 	public String getIdToken() {return idToken;}
 	public void setIdToken(String idToken) {this.idToken = idToken;}
-	public String getUserInfoEndpoint() { return userInfoEndpoint; }
-	public void setUserInfoEndpoint(String userInfoEndpoint) { this.userInfoEndpoint = userInfoEndpoint; }
 }
