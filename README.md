@@ -2,6 +2,8 @@ This AngularJS module implements a set of interceptors that will add the needed 
 
 It will extract the OAUTH2 access token from an OAUTH2 Authorization server using the __Authorization Code Flow__. Of course, to do so, it needs a server backend... Read on.
 
+FIXME: This module is not installable with bower...
+
 # OAUTH2
 
 OAUTH2 allows you to write __client applications__ that are able to access a protected set of __resources__ hosted on a __resource server__.
