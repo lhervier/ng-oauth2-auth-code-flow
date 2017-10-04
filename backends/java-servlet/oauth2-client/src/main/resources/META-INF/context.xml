@@ -13,7 +13,9 @@
 						},
 						"clientId": "4cdd0fcf-1fc9-4c5d-b057-d30f5134a584",
 						"secret": "dG9tY2F0LWZyb250LXNhbXBsZS9BUFBMSUNBVElPTi9XRUI6ajBzYWUydWoxYTAwcm5xNjNjYmdjNTdiZ24=",
-						"redirectUri": "http://localhost:8080/front-sample/oauth2-client/init"
+						"redirectUri": "http://localhost:8080/front-sample/oauth2-client/init",
+						"responseType: "code+id_token",
+						"scope": "openid+profile+email+address+phone"
 					}
 				}
 			}'/>

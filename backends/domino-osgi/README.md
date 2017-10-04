@@ -172,6 +172,8 @@ In the Oauth2Params view, you will have to create a single document with the fol
 - oauth2.client.clientId = *Your oauth2 client application id*
 - oauth2.client.secret = *Your oauth2 client application secret*
 - oauth2.client.redirectURI = *URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.*
+- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
+- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
 
 Again, the easiest way is to use the OAuth2Param form available in the sample database.
 

@@ -85,10 +85,10 @@ public class InitController {
 		String clientId = this.env.getProperty("oauth2.client.clientId");
 		String encodedRedirectUrl = Utils.urlEncode(redirectUrl);
 		String fullRedirectUri = authorizeEndPoint + "?" +
-					"response_type=code+id_token&" +
+					"response_type=" + env.getProperty("oauth2.client.responseType") + "&" +
 					"redirect_uri=" + redirectUri + "&" +
 					"client_id=" + clientId + "&" +
-					"scope=openid profile email address phone&" +
+					"scope=" + this.env.getProperty("oauth2.client.scope") + "&" +
 					"state=" + encodedRedirectUrl;
 		return new ModelAndView("redirect:" + fullRedirectUri);
 	}

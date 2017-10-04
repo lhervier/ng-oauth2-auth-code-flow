@@ -48,6 +48,12 @@ public class OauthClientController {
 
 	@Value("${oauth2.client.redirectUri}")
 	private String redirectUri;
+	
+	@Value("${oauth2.client.responseType}")
+	private String responseType;
+	
+	@Value("${oauth2.client.scope}")
+	private String scope;
 
 	@Autowired
 	private TokenService tokenSvc;
@@ -116,10 +122,10 @@ public class OauthClientController {
 	                .host(authorize.getHost())
 	                .port(Integer.toString(authorize.getPort()))
 	                .path(authorize.getPath())
-	                .queryParam("response_type", "code+id_token")
+	                .queryParam("response_type", this.responseType)
 	                .queryParam("client_id", Utils.urlEncode(this.clientId))
 	                .queryParam("redirect_uri", Utils.urlEncode(this.redirectUri))
-	                .queryParam("scope", "openid+profile+email+address+phone")
+	                .queryParam("scope", this.scope)
 	                .queryParam("state", Utils.urlEncode(redirectUrl))
 	                .build();
 	        return new ModelAndView("redirect:" + uri.toString());

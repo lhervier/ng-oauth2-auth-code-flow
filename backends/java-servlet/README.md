@@ -30,6 +30,8 @@ Before deploying it, you will have to configure it. The code is using Spring Boo
 - oauth2.client.clientId = *Your oauth2 client application id*
 - oauth2.client.secret = *Your oauth2 client application secret*
 - oauth2.client.redirectURI = *URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.*
+- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
+- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
 
 This values can be defined as simple Environment Variables at the OS level. Or, if deploying into tomcat, you can add context.xml file in the configuration. This is my prefered way :
 
@@ -52,7 +54,9 @@ This values can be defined as simple Environment Variables at the OS level. Or, 
 						},
 						"clientId": "Your oauth2 client application id",
 						"secret": "Your oauth2 client application secret",
-						"redirectUri": "URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application."
+						"redirectUri": "URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.",
+						"responseType: "The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to 'code+id_token'.",
+						"scope": "The OAUTH2 scope value. You can leave it empty, or set it to 'openid' if you want to extract an id token."
 					}
 				}
 			}'/>
