@@ -95,7 +95,7 @@ ngOauth2AuthCodeFlow.config(['$httpProvider', function($httpProvider) {
 			},
 			
 			responseError: function(response) {
-				if( response.status == 403 && shouldProcess(response.config.url) ) {
+				if( response.status == 401 && shouldProcess(response.config.url) ) {
 					var Oauth2AuthCodeFlowService = $injector.get('Oauth2AuthCodeFlowService');
 					var $http = $injector.get('$http');
 					var $window = $injector.get('$window');
