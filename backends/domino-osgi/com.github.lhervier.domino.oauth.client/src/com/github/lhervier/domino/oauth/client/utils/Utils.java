@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import javax.xml.bind.DatatypeConverter;
-
+import org.apache.commons.codec.binary.Base64;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.map.JsonMappingException;
@@ -65,8 +64,12 @@ public class Utils {
 	 * @return the decoded string
 	 */
 	public static final String b64Decode(String s) {
-		byte[] decoded = DatatypeConverter.parseBase64Binary(s);
 		try {
+			if( s.length() % 4 == 2 )
+				s = s + "==";
+			else if ( s.length() % 4 == 3 )
+				s = s + "=";
+			byte[] decoded = Base64.decodeBase64(s.getBytes("UTF-8"));
 			return new String(decoded, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);		// UTF-8 is supported !

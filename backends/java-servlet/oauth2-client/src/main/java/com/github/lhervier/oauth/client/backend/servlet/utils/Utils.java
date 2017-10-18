@@ -52,6 +52,10 @@ public class Utils {
 		
 		try {
 			String b64Payload = idToken.substring(pos + 1, pos2);
+			if( b64Payload.length() % 4 == 2 )
+				b64Payload += "==";
+			else if ( b64Payload.length() % 4 == 3 )
+				b64Payload += "=";
 			String payload = new String(Base64.getDecoder().decode(b64Payload.getBytes("UTF-8")), "UTF-8");
 			ObjectMapper mapper = new ObjectMapper();
 			NonceIdToken n = mapper.readValue(payload, NonceIdToken.class);
