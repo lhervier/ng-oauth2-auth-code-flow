@@ -2,6 +2,8 @@ package com.github.lhervier.oauth.client.backend.servlet.controller;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import javax.servlet.http.HttpSession;
 
@@ -102,8 +104,10 @@ public class OauthClientController {
 		if (!StringUtils.isEmpty(code)) {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-			if( "basic".equals(this.tokenAuthMode) )
-				headers.add("Authorization", "Basic " + this.secret);
+			if( "basic".equals(this.tokenAuthMode) ) {
+				String auth = String.format("%s:%s", this.clientId, this.secret);
+				headers.add("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8)));
+			}
 			
 			MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
 			map.add("grant_type", "authorization_code");
@@ -197,8 +201,10 @@ public class OauthClientController {
 	public TokensEndpointResponse refresh() throws GrantException {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		if( !StringUtils.isEmpty(this.secret) )
-			headers.add("Authorization", "Basic " + this.secret);
+		if( !StringUtils.isEmpty(this.secret) ) {
+			String auth = String.format("%s:%s", this.clientId, this.secret);
+			headers.add("Authorization", "Basic " + Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8)));
+		}
 		MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
 		map.add("grant_type", "refresh_token");
 		map.add("refresh_token", this.tokenSvc.getRefreshToken());

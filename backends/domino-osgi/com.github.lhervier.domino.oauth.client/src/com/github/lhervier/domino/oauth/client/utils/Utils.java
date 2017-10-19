@@ -77,6 +77,19 @@ public class Utils {
 	}
 	
 	/**
+	 * Encode a string to base64
+	 * @param s the string to encode
+	 * @return the encoded string
+	 */
+	public static final String b64Encode(String s) {
+		try {
+			return new String(Base64.encodeBase64(s.getBytes("UTF-8")), "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/**
 	 * URL encode a value
 	 * @param value 
 	 * @return the encoded value

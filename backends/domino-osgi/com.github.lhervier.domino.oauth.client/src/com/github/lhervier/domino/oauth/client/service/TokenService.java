@@ -20,6 +20,7 @@ import com.github.lhervier.domino.oauth.client.Oauth2ClientProperties;
 import com.github.lhervier.domino.oauth.client.model.GrantError;
 import com.github.lhervier.domino.oauth.client.model.GrantResponse;
 import com.github.lhervier.domino.oauth.client.utils.HttpConnection;
+import com.github.lhervier.domino.oauth.client.utils.Utils;
 
 /**
  * Service to access to the token endpoint
@@ -128,8 +129,10 @@ public class TokenService {
 		.withFactory(this.getSSLSocketFactory())
 		.setTextContent(textContent, "UTF-8");
 		
-		if( "basic".equals(authMode) )
-			conn.addHeader("Authorization", "Basic " + this.props.getSecret());
+		if( "basic".equals(authMode) ) {
+			String auth = String.format("%s:%s", this.props.getClientId(), this.props.getSecret());
+			conn.addHeader("Authorization", "Basic " + Utils.b64Encode(auth));
+		}
 		
 		return conn;
 	}
