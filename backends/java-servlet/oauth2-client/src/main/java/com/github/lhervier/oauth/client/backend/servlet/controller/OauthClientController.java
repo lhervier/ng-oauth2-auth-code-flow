@@ -3,6 +3,8 @@ package com.github.lhervier.oauth.client.backend.servlet.controller;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.servlet.http.HttpSession;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -34,6 +36,8 @@ import com.github.lhervier.oauth.client.backend.servlet.utils.Utils;
 @RequestMapping(value = "/")
 public class OauthClientController {
 
+	private static final String ATTR_REDIRECT_URL = OauthClientController.class.getName() + ".REDIRECT_URL";
+	
 	@Value("${oauth2.client.endpoints.authorize.url}")
 	private String authorizeUrl;
 
@@ -64,6 +68,9 @@ public class OauthClientController {
 	@Autowired
 	private TokenService tokenSvc;
 
+	@Autowired
+	private HttpSession session;
+	
 	private RestTemplate template = new RestTemplate();
 
 	// =========================================================================
@@ -122,12 +129,13 @@ public class OauthClientController {
 				this.tokenSvc.setIdToken(resp.getIdToken());
 				this.tokenSvc.setTokenType(resp.getTokenType());
 				
-				return new ModelAndView("redirect:" + state);
+				return new ModelAndView("redirect:" + this.session.getAttribute(ATTR_REDIRECT_URL));
 			} else
 				throw new GrantException(resp);
 		}
 		
 		// Otherwise, redirect to authorize endpoint
+		this.session.setAttribute(ATTR_REDIRECT_URL, redirectUrl);
 		try {
 			URL authorize = new URL(this.authorizeUrl);
 			UriComponentsBuilder builder = UriComponentsBuilder
@@ -140,7 +148,7 @@ public class OauthClientController {
 	                .queryParam("client_id", Utils.urlEncode(this.clientId))
 	                .queryParam("redirect_uri", Utils.urlEncode(this.redirectUri))
 	                .queryParam("scope", this.scope)
-	                .queryParam("state", Utils.urlEncode(redirectUrl))
+	                .queryParam("state", state)
 	                .queryParam("nonce", this.tokenSvc.getSessionId());
 			if( !StringUtils.isEmpty(this.authorizeAccessType) )
 				builder.queryParam("access_type", this.authorizeAccessType);

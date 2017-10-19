@@ -3,6 +3,11 @@ package com.github.lhervier.domino.oauth.client;
 public class Constants {
 
 	/**
+	 * Session attribute to store the redirect url
+	 */
+	public static final String SESSION_REDIRECT_URL = "REDIRECT_URL";
+	
+	/**
 	 * Session attribute for access token
 	 */
 	public static final String SESSION_ACCESS_TOKEN = "ACCESS_TOKEN";

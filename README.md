@@ -89,7 +89,7 @@ The redirect_url parameter MUST contain the url that will be loaded by the brows
 This endpoint MUST redirect to the OAUTH2 Authorization Server "/authorize" endpoint. 
 To do so, it must define a "response_type" parameter compatible with the authorization code flow (like "code" or "code+idtoken"), along with other "/authorize" endpoint parameters, like the clientId, the scope, etc...
 
-It MUST also send the value of the "redirect_url" parameter in the "state" parameter. 
+It MUST also keep the "redirect_url" value in memory (ie, in http session).
 
 ### When called with a "code" parameter
 
@@ -99,7 +99,7 @@ As such, the authorization server will add the "code" parameter which will conta
 In this case, the endpoint MUST process the authorization code, and send it to the authorization server "/token" endpoint (this is server to server communication) 
 to obtain the access token and the refresh token (and an id token if the server is openid compliant). The tokens must then be stored server side (in the session object for example).
 
-Once done, our endpoint MUST redirect to the url present in the "state" parameter. Remember ? It contains our initial redirect_url.
+Once done, our endpoint MUST redirect to the url sent initially in the "redirect_url" parameter.
 
 ### When called with an "error" parameter
 
