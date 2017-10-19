@@ -12,7 +12,7 @@ import com.github.lhervier.domino.oauth.client.Constants;
 import com.github.lhervier.domino.oauth.client.model.TokensResponse;
 
 @Controller
-public class TokenController {
+public class TokensController {
 
 	/**
 	 * The http session

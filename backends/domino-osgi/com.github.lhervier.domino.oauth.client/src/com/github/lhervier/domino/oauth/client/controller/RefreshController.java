@@ -37,7 +37,7 @@ public class RefreshController {
 	 * The token controller
 	 */
 	@Autowired
-	private TokenController tokenCtrl;
+	private TokensController tokenCtrl;
 	
 	/**
 	 * The token service
