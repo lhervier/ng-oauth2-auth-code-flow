@@ -142,7 +142,8 @@ Each have their own README.md file, so, just have a look.
 Each implementation needs to be configured with the following properties :
 
 - oauth2.client.endpoints.authorize.url = *URL of your OAuth2 Authorization Server /authorize endpoint*
-- oauth2.client.endpoints.authorize.accessType = *When using Google Clous OAUTH2, set this value to 'offline' if you want a refresh token*
+- oauth2.client.endpoints.authorize.accessType = *When using Google Cloud OAUTH2, set this value to 'offline' if you want a refresh token*
+- oauth2.client.endpoints.authorize.prompt = *When using Google Cloud OAUTH2, set this value to 'consent' if you want a refresh token*. If not set, you will not get a login screen, and only get a refresh token the first time.
 - oauth2.client.endpoints.token.url = *URL of your OAuth2 Authorization Server /token endpoint*
 - oauth2.client.endpoints.token.authMode = *One of "basic"/"queryString"/"none". This is the way the secret will be passed to the token endpoint.*
 	- "basic" : It will besent to the "Authorization Basic" header. The client_id will NOT be passed in the query string.

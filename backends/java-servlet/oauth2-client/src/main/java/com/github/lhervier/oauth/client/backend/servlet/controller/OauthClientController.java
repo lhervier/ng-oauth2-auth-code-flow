@@ -46,6 +46,9 @@ public class OauthClientController {
 	@Value("${oauth2.client.endpoints.authorize.accessType}")
 	private String authorizeAccessType;
 	
+	@Value("${oauth2.client.endpoints.authorize.prompt}")
+	private String authorizePrompt;
+	
 	@Value("${oauth2.client.endpoints.token.url}")
 	private String tokenUrl;
 	
@@ -152,10 +155,13 @@ public class OauthClientController {
 	                .queryParam("client_id", Utils.urlEncode(this.clientId))
 	                .queryParam("redirect_uri", Utils.urlEncode(this.redirectUri))
 	                .queryParam("scope", this.scope)
-	                .queryParam("state", state)
 	                .queryParam("nonce", this.tokenSvc.getSessionId());
+			if( !StringUtils.isEmpty(state) )
+				builder.queryParam("state", state);
 			if( !StringUtils.isEmpty(this.authorizeAccessType) )
 				builder.queryParam("access_type", this.authorizeAccessType);
+			if( !StringUtils.isEmpty(this.authorizePrompt) )
+				builder.queryParam("prompt", this.authorizePrompt);
 	        
 	        return new ModelAndView("redirect:" + builder.build().toString());
 		} catch(MalformedURLException e) {

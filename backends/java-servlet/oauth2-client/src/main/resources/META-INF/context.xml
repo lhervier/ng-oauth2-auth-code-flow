@@ -11,8 +11,7 @@
 					"client": {
 						"endpoints": {
 							"authorize": {
-								"url": "http://login.privatenetwork.net/oauth2.nsf/oauth2-server/authorize",
-								"accessType": null
+								"url": "http://login.privatenetwork.net/oauth2.nsf/oauth2-server/authorize"
 							},
 							"token": {
 								"url": "http://login.privatenetwork.net/oauth2.nsf/oauth2-server/token",
@@ -23,7 +22,7 @@
 						"secret": "dG9tY2F0LWZyb250LXNhbXBsZS9BUFBMSUNBVElPTi9XRUI6ajBzYWUydWoxYTAwcm5xNjNjYmdjNTdiZ24=",
 						"redirectUri": "http://localhost:8080/front-sample/oauth2-client/init",
 						"responseType: "code+id_token",
-						"scope": "openid+profile+email+address+phone"
+						"scope": "openid profile email address phone"
 					}
 				}
 			}'/>
@@ -41,7 +40,8 @@
 						"endpoints": {
 							"authorize": {
 								"url": "https://accounts.google.com/o/oauth2/v2/auth",
-								"accessType": "offline"
+								"accessType": "offline",
+								"prompt": "consent"
 							},
 							"token": {
 								"url": "https://www.googleapis.com/oauth2/v4/token",
@@ -52,7 +52,7 @@
 						"secret": "rOUuY3PTLoOYX_mUjgPRkbxL",
 						"redirectUri": "http://localhost:8080/oauth2-client/init",
 						"responseType: "code",
-						"scope": "openid%20profile%20email"
+						"scope": "openid profile email"
 					}
 				}
 			}'/>

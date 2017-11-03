@@ -101,14 +101,4 @@ public class Utils {
 			throw new RuntimeException(e);		// UTF-8 is supported !
 		}
 	}
-	
-	/**
-	 * Retourne l'URL de redirection
-	 * @param redirectUri
-	 * @return l'url de redirection
-	 * @throws UnsupportedEncodingException 
-	 */
-	public static final String getEncodedRedirectUri(String redirectUri) {
-		return urlEncode(redirectUri.toString());
-	}
 }

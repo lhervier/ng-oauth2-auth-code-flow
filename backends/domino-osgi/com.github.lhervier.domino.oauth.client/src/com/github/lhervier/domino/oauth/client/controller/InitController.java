@@ -1,5 +1,7 @@
 package com.github.lhervier.domino.oauth.client.controller;
 
+import static com.github.lhervier.domino.oauth.client.utils.Utils.urlEncode;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,19 +84,23 @@ public class InitController {
 		// Otherwise, we redirect to the authorize endpoint
 		this.session.setAttribute(Constants.SESSION_REDIRECT_URL, redirectUrl);
 		String authorizeEndPoint = this.props.getAuthorizeUrl();
-		String redirectUri = Utils.getEncodedRedirectUri(this.props.getRedirectUri());
+		String redirectUri = this.props.getRedirectUri();
 		String clientId = this.props.getClientId();
-		String fullRedirectUri = authorizeEndPoint + "?" +
-					"response_type=" + this.props.getResponseType() + "&" +
-					"redirect_uri=" + redirectUri + "&" +
-					"client_id=" + clientId + "&" +
-					"scope=" + this.props.getScope() + "&" +
-					"state=" + state + "&" +
-					"nonce=" + session.getId();
+		StringBuffer fullRedirectUri = new StringBuffer("redirect:")
+					.append(authorizeEndPoint)
+					.append("?response_type=").append(urlEncode(this.props.getResponseType()))
+					.append("&redirect_uri=").append(urlEncode(redirectUri))
+					.append("&client_id=").append(urlEncode(clientId))
+					.append("&scope=").append(urlEncode(this.props.getScope()));
+		if( !StringUtils.isEmpty(state) )
+			fullRedirectUri.append("&state=").append(urlEncode(state));
+		fullRedirectUri.append("&nonce=").append(urlEncode(this.session.getId()));
 		if( !StringUtils.isEmpty(this.props.getAuthorizeAccessType()) )
-			fullRedirectUri += "&access_type=" + this.props.getAuthorizeAccessType();
+			fullRedirectUri.append("&access_type=").append(urlEncode(this.props.getAuthorizeAccessType()));
+		if( !StringUtils.isEmpty(this.props.getAuthorizePrompt()) )
+			fullRedirectUri.append("&prompt=").append(urlEncode(this.props.getAuthorizePrompt()));
 		
-		return new ModelAndView("redirect:" + fullRedirectUri);
+		return new ModelAndView(fullRedirectUri.toString());
 	}
 	
 	/**
@@ -111,8 +117,8 @@ public class InitController {
 			// Create the connection
 			this.tokenSvc.createTokenConnection(
 					"grant_type=authorization_code" +
-					"&code=" + code +
-					"&redirect_uri=" + Utils.getEncodedRedirectUri(this.props.getRedirectUri())
+					"&code=" + urlEncode(code) +
+					"&redirect_uri=" + urlEncode(this.props.getRedirectUri())
 			)
 			
 			// OK => Mémorise les tokens en session et redirige vers l'url initiale
@@ -129,9 +135,9 @@ public class InitController {
 						ret.addObject("error", error);
 						ret.setViewName("grantError");
 					} else {
-						InitController.this.session.setAttribute("ACCESS_TOKEN", grant.getAccessToken());
-						InitController.this.session.setAttribute("REFRESH_TOKEN", grant.getRefreshToken());
-						InitController.this.session.setAttribute("ID_TOKEN", grant.getIdToken());
+						InitController.this.session.setAttribute(Constants.SESSION_ACCESS_TOKEN, grant.getAccessToken());
+						InitController.this.session.setAttribute(Constants.SESSION_REFRESH_TOKEN, grant.getRefreshToken());
+						InitController.this.session.setAttribute(Constants.SESSION_ID_TOKEN, grant.getIdToken());
 						ret.setViewName("redirect:" + InitController.this.session.getAttribute(Constants.SESSION_REDIRECT_URL));
 					}
 				}

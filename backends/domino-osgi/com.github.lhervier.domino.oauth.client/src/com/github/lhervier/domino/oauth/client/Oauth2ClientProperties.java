@@ -22,6 +22,12 @@ public class Oauth2ClientProperties {
 	private String authorizeAccessType;
 	
 	/**
+	 * The authorize prompt (sepcific to Google Cloud)
+	 */
+	@Value("${oauth2.client.endpoints.authorize.prompt:@null}")
+	private String authorizePrompt;
+	
+	/**
 	 * The token URL
 	 */
 	@Value("${oauth2.client.endpoints.token.url:@null}")
@@ -207,6 +213,20 @@ public class Oauth2ClientProperties {
 	 */
 	public void setAuthorizeAccessType(String accessType) {
 		this.authorizeAccessType = accessType;
+	}
+
+	/**
+	 * @return the authorizePrompt
+	 */
+	public String getAuthorizePrompt() {
+		return authorizePrompt;
+	}
+
+	/**
+	 * @param authorizePrompt the authorizePrompt to set
+	 */
+	public void setAuthorizePrompt(String authorizePrompt) {
+		this.authorizePrompt = authorizePrompt;
 	}
 	
 }

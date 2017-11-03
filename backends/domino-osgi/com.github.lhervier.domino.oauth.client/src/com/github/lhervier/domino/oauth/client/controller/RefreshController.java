@@ -57,8 +57,12 @@ public class RefreshController {
 			String refreshToken = (String) this.httpSession.getAttribute(Constants.SESSION_REFRESH_TOKEN);
 			
 			// No refresh token => Unable to ask for a new one
-			if( refreshToken == null )
+			if( refreshToken == null ) {
+				this.httpSession.removeAttribute(Constants.SESSION_REFRESH_TOKEN);
+				this.httpSession.removeAttribute(Constants.SESSION_ACCESS_TOKEN);
+				this.httpSession.removeAttribute(Constants.SESSION_ID_TOKEN);
 				return this.tokenCtrl.tokens();
+			}
 			
 			final ValueHolder<RefreshTokenException> ex = new ValueHolder<RefreshTokenException>();
 			this.tokenSvc.createTokenConnection(
