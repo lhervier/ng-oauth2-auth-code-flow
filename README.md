@@ -15,13 +15,11 @@ The important thing is that, with OAUTH2, the __resource server__ (the server th
 For this, the __client application__ will get an __access token__ from an OAUTH2 __Authorization Server__ (for example, a Microsoft ADFS), and will send this token 
 with every requests made to the __resource server__. A common way of sending the __access token__ is to add it to the HTTP header named "Authorization", with the "Bearer" prefix.
 
-Event though OAUTH2 RFC only says that the __access token__ is a string, technically speaking, it is often a JWT : Simply said, it is a JSON string associated with a digital signature. 
-See https://jwt.io for more details. 
+The __resource server__ will have to validate the passed token. And as this behavior is not described in the RFC, you will have to know how to do this poeration, specificaly for 
+the authorization Server you are accessing :
 
-And because of this digital signature, the __resource server__ will be able to validate the token : 
-
-- If the __access token__ is signed using a public/private key algorithm (RSA), you will have to configure your __resource server__ so it knows the public key. 
-- And if the __access token__ is signed using a symetric algorithm (HMAC), you will have to configure it so it knows the secret that the __authorization server__ has used to generate the token.
+- Microsoft ADFS will generate JWT, and will publish the public keys on their web site
+- Domino Autorization Server and Google Cloud will give you an endpoint to send the token to in order to validate it. This is described in RFC 7662.
 
 # Background again : The OAUTH2 flows
 
@@ -75,7 +73,7 @@ To use this angularJS module, you will have to implement three endpoints :
 - A endpoint that will return the access token (and an id token if your oauth2 authorization server is openid compliant).
 - And a endpoint that will refresh the current access token (and refresh token).
 
-## The "/init" end point
+## The "/login" end point
 
 This endpoint will initialize the OAUTH2 dance. Note that when registering your application your client application, you will have to define the URI of this endpoint as the redirectUri.
 This is VERY important.
@@ -93,7 +91,7 @@ It MUST also keep the "redirect_url" value in memory (ie, in http session).
 
 ### When called with a "code" parameter
 
-Once the user is authorized, the OAUTH2 Authorization Server will redirect the user agent to the client application redirect URI. And remember that this URI MUST point to our "/init" endpoint.
+Once the user is authorized, the OAUTH2 Authorization Server will redirect the user agent to the client application redirect URI. And remember that this URI MUST point to our "/login" endpoint.
 As such, the authorization server will add the "code" parameter which will contain the authorization code.
 
 In this case, the endpoint MUST process the authorization code, and send it to the authorization server "/token" endpoint (this is server to server communication) 
@@ -130,95 +128,25 @@ Once done, its answer must be the same as the answer of the "/tokens" endpoint.
 
 # Implementations
 
-A set of implementations of those endpoints are provided with this project :
+A set of implementations of those endpoints are provided in different repositories:
 
-- A Java webapp that can be ran on any Tomcat server [README](backends/java-servlet/README.md)
-- A IBM Domino Osgi plugin that exposes the endpoints as servlets [README](backends/domino-osgi/README.md)
+- A [Java webapp](https://github.com/lhervier/oauth2-spring-client-sample) that can be ran on any Tomcat server using Spring Framework
+- A [IBM Domino Osgi plugin](https://github.com/lhervier/oauth2-dom-client) that exposes the endpoints as servlets, and a sample client NSF application that uses those endpoints.
 
 Each have their own README.md file, so, just have a look.
-
-## The awaited properties
-
-Each implementation needs to be configured with the following properties :
-
-- oauth2.client.endpoints.authorize.url = *URL of your OAuth2 Authorization Server /authorize endpoint*
-- oauth2.client.endpoints.authorize.accessType = *When using Google Cloud OAUTH2, set this value to 'offline' if you want a refresh token*
-- oauth2.client.endpoints.authorize.prompt = *When using Google Cloud OAUTH2, set this value to 'consent' if you want a refresh token*. If not set, you will not get a login screen, and only get a refresh token the first time.
-- oauth2.client.endpoints.token.url = *URL of your OAuth2 Authorization Server /token endpoint*
-- oauth2.client.endpoints.token.authMode = *One of "basic"/"queryString"/"none". This is the way the secret will be passed to the token endpoint.*
-	- "basic" : It will besent to the "Authorization Basic" header. The client_id will NOT be passed in the query string.
-	- "queryString" : It will be passed along the "client_id" in the query string, in the "client_secret" parameter.
-	- "none" : Only the "client_id" will be passed in the query string.
-- oauth2.client.responseType = *The OAUTH2 authorize response type. Must be compatible with the authorization code flow (or openid hybrid flow). In doubt, set it to "code+id_token".*
-- oauth2.client.scope = *The OAUTH2 scope value. You can leave it empty, or set it to "openid" if you want to extract an id token.*
-- oauth2.client.clientId = *Your oauth2 client application id*
-- oauth2.client.secret = *Your oauth2 client application secret*
-- oauth2.client.redirectURI = *URL used by the users to access your application. Must be coherent with what's configured in your OAUTH2 application.*
-
-## Values of the properties when using Google Cloud 
-
-To plug the sample apps into a google cloud environment, it's pretty easy.
-
-The endpoints are available at this URL :
-
-	https://accounts.google.com/.well-known/openid-configuration
-
-You will find the authorize and the token endpoint in the JSON.
-
-The access type must be set to "offline" if you wan a refresh token. This is not present in OAUTH2 RFC...
-
-The token authMode must be set to "queryString", as described in this document (Go to Step 2.0) :
-
-	https://developers.google.com/identity/protocols/OAuth2WebServer
-
-The responseType must be set to "code", and the scope must be set to "openid" if you want to be able to validate the provided access token.
-	
-Then, to declare your application, go to the google cloud console : 
-
-	https://console.developers.google.com
-	
-In the "credentials" part, click the "create credentials" button, and select "OAuth client Id". Choose "Web application", enter a name and your __redirect uri__ (the url of your local "/init" endpoint). 
-Click "create", and Google will display your __client id__ and __client secret__.
-
-Then, you can update the sample app (app.js file) to make it access the openid userInfo endpoint (which is a good example of an API that works with an bearer access token). 
-You will find it in the JSON, alongside the other endpoints urls.
-
-## Values of the properties when using Facebook 
-
-TBD
-
-## Values of the properties when using LinkedIn
-
-TBD
-
-## Values of the properties when using GitHub
-
-TBD
-
-## Values of the properties when using Microsoft Azure AD
-
-TBD
-
-## Values of the properties when using a local Microsoft ADFS
-
-TBD
-
-## Values of the properties when using Domino OAUTH2 Authorization Server
-
-TBD
 
 # How to use the angular module
 
 Once you have your three endpoints, and your backends are configured properly, you are ready to go.
 
-Include the javascript file with the other modules in your HTML template. In a near future, it should be available with bower.
+Include the provided javascript file with the other modules in your HTML template. In a near future, it should be available with bower.
 
-Here is a sample Controller example that uses the following (imaginary) environment :
+Here is a sample Controller that uses the following (imaginary) environment :
 
 - A Rest API, configured to validate the access token, is available at "http://apis.acme.com/myRestApi"
 - Note that the "callRestApi" method uses a normal $resource call. The only specific code is to make it react when the refresh token has expired. And it could have been handled by another interceptor, generic to the application.
 - Note the use of the "init" method to which you will have to send the url of your three endpoints.
-	- "/init" endpoint is located at the relative url "oauth2-client/init"
+	- "/login" endpoint is located at the relative url "oauth2-client/login"
 	- "/tokens" endpoint is located at the relative url "oauth2-client/tokens"
 	- and "/refresh" endpoint is located at the relative url "oauth2-client/refresh"
 
@@ -243,13 +171,17 @@ Here is a sample Controller example that uses the following (imaginary) environm
     <div>{{ctrl.accessToken}}</div>
   </div>
   <hr/>
-
   <div ng-show="ctrl.jsonResponse != null">
     <div>Json Response</div>
     <div>{{ctrl.jsonResponse}}</div>
   </div>
   <hr/>
-
+  <div>
+    <div>URL of a resource (rest service waiting for the access token in a Authorization: Bearer http header) : </div>
+    <div>
+    	<input type="text" ng-model="ctrl.resUrl" style="width:500px">
+    </div>
+  </div>
   <button ng-click="ctrl.callRestApi()">
     Call protected Rest API
   </button>
@@ -274,10 +206,13 @@ sampleApp.controller(
   this.jsonResponse = null;
   // The access token, in case you want to play with it (note that you DON'T have to)
   this.accessToken = null;
+  // The url of the protected resource
+  this.resUrl = null;
   
   this.callRestApi = function() {
     // Interceptor will add the "Authorization Bearer" header for us !
-    $resource('http://apis.acme.com/myRestApi').get(
+	// 'http://resource.privatenetwork.net:8080/oauth2-spring-res-server/api/subject'
+    $resource(ths.resUrl).get(
         function(jsonResponse) {
           ths.jsonResponse = JSON.stringify(jsonResponse);
         },
@@ -293,11 +228,11 @@ sampleApp.controller(
   };
   
   // Initialization of the OAUTH2 dance
-  Oauth2AuthCodeFlowService.init('oauth2-client/init', 'oauth2-client/tokens', 'oauth2-client/refresh').then(
+  Oauth2AuthCodeFlowService.init('oauth2-client/login', 'oauth2-client/tokens', 'oauth2-client/refresh').then(
       function(result) {
         // This is just for fun. We don't need the access token. 
         // The interceptor handle it for you.
-        ths.accessToken = result.access_token;  
+        ths.accessToken = result.access_token;
       },
       function(reason) {
         // If reconnect is needed at startup, handle it the way you want 
@@ -309,4 +244,5 @@ sampleApp.controller(
       }
   );
 }]);
+
 ```
